@@ -6,6 +6,7 @@
 #include "DrawDebugHelpers.h"
 #include "PlayerCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AWeapon::AWeapon()
 {
@@ -15,29 +16,41 @@ AWeapon::AWeapon()
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
+	PlayerCharacter = Cast<APlayerCharacter>(GetAttachParentActor());
 }
 
-void AWeapon::Tick(float DeltaTime)
+void AWeapon::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
-	Super::Tick(DeltaTime);
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AWeapon, Ammo);
 }
+
 
 void AWeapon::CameraComponentRequest()
 {
-	const APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(GetAttachParentActor());
 	if (PlayerCharacter)
 	{
 		CameraComponent = PlayerCharacter->GetCameraComponent();
 	}
 }
 
+void AWeapon::OnRep_UpdateAmmo() const
+{
+	if (PlayerCharacter) { PlayerCharacter->UpdateHudAmmo(); }
+}
+
 void AWeapon::Fire()
 {
+	if (Ammo<=0.f){return;}
+
 	if (!CameraComponent)
 	{
 		CameraComponentRequest();
 		if (!CameraComponent) {return;}
 	}
+
+	Ammo--;
 
 	const UWorld* World = GetWorld();
 	DrawDebugLine(
@@ -45,7 +58,7 @@ void AWeapon::Fire()
 		GetActorLocation(),
 		CameraComponent->GetComponentLocation()+ CameraComponent->GetForwardVector()*10000.f,
 		FColor::Black,
-		true,
+		false,
 		1);
 
 	FCollisionQueryParams CollisionQueryParams;
@@ -63,5 +76,10 @@ void AWeapon::Fire()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Hit"));
 	}
+}
+
+void AWeapon::AddAmmo(float AddAmmo)
+{
+	Ammo += AddAmmo;
 }
 

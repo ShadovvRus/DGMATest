@@ -8,7 +8,7 @@
 
 class UCameraComponent;
 class AWeapon;
-class ADGMAPlayerController;
+class AGamePlayerController;
 
 UCLASS()
 class DGMATEST_API APlayerCharacter : public ACharacter
@@ -20,6 +20,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	float GetPitch() const { return Pitch; }
+
+	bool AddAmmo(float Ammo);
+	void UpdateHudAmmo();
 
 	UCameraComponent* GetCameraComponent() const { return CameraComponent; }
 
@@ -47,7 +50,7 @@ private:
 	float Pitch{};
 
 	UPROPERTY()
-	ADGMAPlayerController* PlayerController{};
+	AGamePlayerController* PlayerController{};
 
 	UPROPERTY()
 	AWeapon* Weapon {};

@@ -1,6 +1,6 @@
 
 #include "PlayerCharacter.h"
-#include "DGMAPlayerController.h"
+#include "GamePlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include <Net/UnrealNetwork.h>
@@ -24,9 +24,9 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PlayerController=Cast<ADGMAPlayerController>(GetController());
+	PlayerController=Cast<AGamePlayerController>(GetController());
 	CameraComponent = FindComponentByClass<UCameraComponent>();
-	
+
 	FindWeapon();
 	InputInitialization();
 	
@@ -65,7 +65,15 @@ void APlayerCharacter::FindWeapon()
 {
 	TArray<AActor*> Actors;
 	GetAllChildActors(Actors, true);
-	if (Actors.GetData()) { Weapon = Cast<AWeapon>(Actors[0]); }
+
+	if (Actors.IsValidIndex(0)) { Weapon = Cast<AWeapon>(Actors[0]); }
+}
+
+void APlayerCharacter::UpdateHudAmmo()
+{
+	if (!Weapon){ FindWeapon(); }
+
+	if (Weapon && PlayerController) { PlayerController->SetHudAmmo(Weapon->GetCurrentAmmo()); }
 }
 
 void APlayerCharacter::OnTurn(const float Axis)
@@ -97,6 +105,22 @@ void APlayerCharacter::OnFire()
 
 void APlayerCharacter::Server_Fire_Implementation()
 {
-	Weapon->Fire();
+	if (Weapon)
+	{
+		Weapon->Fire();
+	}
 }
+
+
+bool APlayerCharacter::AddAmmo(float Ammo)
+{
+	if (Weapon)
+	{
+		Weapon->AddAmmo(Ammo);
+		return true;
+	}
+
+	return false;
+}
+
 
